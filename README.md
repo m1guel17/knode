@@ -1,94 +1,54 @@
 # Knode
 
-A filesystem-to-knowledge-graph pipeline. Knode watches a folder of
-heterogeneous documents (PDF, DOCX, PPTX, XLSX, HTML, EML), extracts
-entities and relationships using LLMs, and persists the result as a
-dual **layout + semantic** knowledge graph in Neo4j. The graph is
-queryable via Cypher for exploration and via a RAG pipeline for
-LLM-augmented question answering grounded in the source corpus.
+A filesystem-to-knowledge-graph pipeline. Knode watches a folder of heterogeneous documents (PDF, DOCX, PPTX, XLSX, HTML, EML), extracts entities and relationships using LLMs, and persists the result as a dual **layout + semantic** knowledge graph in Neo4j. The graph is queryable via Cypher for exploration and via a RAG pipeline for LLM-augmented question answering grounded in the source corpus.
 
-The system is built on five principles: **modularity** (every layer
-is interface-driven and swappable), **provenance** (every fact traces
-back to a specific location in a specific document), **incremental
-processing** (re-runs only touch changed files), **cost-aware LLM
-usage** (tiered models, batching, budgets), and **TypeScript
-end-to-end** (no polyglot deployment).
+The system is built on five principles: **modularity** (every layer is interface-driven and swappable), **provenance** (every fact traces back to a specific location in a specific document), **incremental processing** (re-runs only touch changed files), **cost-aware LLMusage** (tiered models, batching, budgets), and **TypeScript end-to-end** (no polyglot deployment).
 
-For the full architectural specification, see [`PRD/project.md`](./PRD/project.md).
-For per-phase delivery plans, see `PRD/phase-*.md`.
+For the full architectural specification, see [`PRD/project.md`](./PRD/project.md). For per-phase delivery plans, see `PRD/phase-*.md`.
 
 ## What Knode does
 
 - Watches a directory tree for added, changed, and removed documents
-- Parses PDF, DOCX, PPTX, XLSX, HTML, and `.eml` into structured chunks
-  with full metadata (page numbers, heading hierarchy, byte offsets)
-- Extracts entities and relationships per chunk with a configurable
-  LLM provider (Anthropic, OpenAI, or Ollama via the Vercel AI SDK)
-- Resolves duplicate entities across documents (e.g., "Apple Inc." and
-  "Apple" collapse to one node)
+- Parses PDF, DOCX, PPTX, XLSX, HTML, and `.eml` into structured chunks with full metadata (page numbers, heading hierarchy, byte offsets)
+- Extracts entities and relationships per chunk with a configurable LLM provider (Anthropic, OpenAI, or Ollama via the Vercel AI SDK)
+- Resolves duplicate entities across documents (e.g., "Apple Inc." and "Apple" collapse to one node)
 - Generates vector embeddings for every node and chunk
 - Persists a **dual knowledge graph**:
-  - **Layout KG** — `Document → Page → Section → Paragraph` —
-    preserves provenance
-  - **Semantic KG** — typed entities and relationships extracted from
-    chunk content
-  - Inter-graph `MENTIONED_IN` edges link semantic nodes back to the
-    paragraph(s) where they were extracted
-- Exposes a Cypher API for graph exploration and a RAG pipeline that
-  combines vector similarity with graph traversal for grounded Q&A
-- Supports incremental updates — only re-processes files whose content
-  hash has changed
+  - **Layout KG** — `Document → Page → Section → Paragraph` — preserves provenance
+  - **Semantic KG** — typed entities and relationships extracted from chunk content
+  - Inter-graph `MENTIONED_IN` edges link semantic nodes back to the paragraph(s) where they were extracted
+- Exposes a Cypher API for graph exploration and a RAG pipeline that combines vector similarity with graph traversal for grounded Q&A
+- Supports incremental updates — only re-processes files whose content hash has changed
 
 ## What Knode is not
 
 - Not a general-purpose document management system
 - Does not perform OCR inline (it can delegate to external OCR services)
 - Does not ship a web UI (the query layer is API-only)
-- Not a replacement for a full ETL platform like Unstructured.io at
-  massive scale
+- Not a replacement for a full ETL platform like Unstructured.io at massive scale
 - Not real-time — extraction is batch-oriented and bounded by LLM latency
 
 ## Architecture
 
 A four-layer pipeline with a query layer on top:
 
-```
-┌──────────────────────────────────────────────────────────┐
-│                     Configuration                         │
-│   (ontology, LLM providers, graph backend, chunking)     │
-└──────────────────────────┬───────────────────────────────┘
-                           │
-┌──────────────────────────▼───────────────────────────────┐
-│  Layer 1: Scanner & Ingestion                             │
-│  chokidar watcher → classifier → BullMQ queue             │
-└──────────────────────────┬───────────────────────────────┘
-                           │ FileJob
-┌──────────────────────────▼───────────────────────────────┐
-│  Layer 2: Parsing & Chunking                              │
-│  PDF / DOCX / XLSX / PPTX / HTML / EML adapters           │
-│  + heading-aware recursive chunker                        │
-└──────────────────────────┬───────────────────────────────┘
-                           │ Chunk[]
-┌──────────────────────────▼───────────────────────────────┐
-│  Layer 3: LLM Extraction                                  │
-│  triple extractor → entity resolver → embedding generator │
-└──────────────────────────┬───────────────────────────────┘
-                           │ GraphData
-┌──────────────────────────▼───────────────────────────────┐
-│  Layer 4: Storage                                         │
-│  Neo4j / Memgraph (layout + semantic) + vector index      │
-└──────────────────────────┬───────────────────────────────┘
-                           │
-┌──────────────────────────▼───────────────────────────────┐
-│  Query Layer                                              │
-│  Cypher API · RAG pipeline · hybrid search                │
-└──────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Config["<b>Configuration</b><br/>ontology, LLM providers, graph backend, chunking"]
+    L1["<b>Layer 1: Scanner & Ingestion</b><br/>chokidar watcher → classifier → BullMQ queue"]
+    L2["<b>Layer 2: Parsing & Chunking</b><br/>PDF / DOCX / XLSX / PPTX / HTML / EML adapters<br/>+ heading-aware recursive chunker"]
+    L3["<b>Layer 3: LLM Extraction</b><br/>triple extractor → entity resolver → embedding generator"]
+    L4["<b>Layer 4: Storage</b><br/>Neo4j / Memgraph (layout + semantic) + vector index"]
+    Query["<b>Query Layer</b><br/>Cypher API · RAG pipeline · hybrid search"]
+
+    Config --> L1
+    L1 -->|FileJob| L2
+    L2 -->|"Chunk[]"| L3
+    L3 -->|GraphData| L4
+    L4 --> Query
 ```
 
-Every layer is reached through a typed interface, so each component is
-independently replaceable: swap Neo4j for Memgraph, Claude for a local
-Ollama model, or `pdf-parse` for `pdfjs-dist` by changing
-configuration, not pipeline code.
+Every layer is reached through a typed interface, so each component is independently replaceable: swap Neo4j for Memgraph, Claude for a local Ollama model, or `pdf-parse` for `pdfjs-dist` by changing configuration, not pipeline code.
 
 ## Quickstart
 
@@ -101,9 +61,7 @@ cp .env.example .env  # then set ANTHROPIC_API_KEY (and others)
 npx tsx src/index.ts --file ./tests/fixtures/sample.pdf
 ```
 
-Open Neo4j Browser at http://localhost:7474 (user `neo4j`, password
-`knode-dev-password`) and run `MATCH (n) RETURN n LIMIT 200` to
-inspect the graph.
+Open Neo4j Browser at http://localhost:7474 (user `neo4j`, password `knode-dev-password`) and run `MATCH (n) RETURN n LIMIT 200` to inspect the graph.
 
 To watch a directory continuously (Phase 2+):
 
@@ -113,22 +71,15 @@ npx tsx src/index.ts --watch ./documents
 
 ## Configuration
 
-Knode reads `config/default.toml`, then layers `config/{NODE_ENV}.toml`
-on top, then applies environment-variable overrides. Configuration is
-loaded once at startup and passed explicitly to each component — no
-global singleton.
+Knode reads `config/default.toml`, then layers `config/{NODE_ENV}.toml` on top, then applies environment-variable overrides. Configuration is loaded once at startup and passed explicitly to each component — no global singleton.
 
 Key configuration files:
 
-- **`config/default.toml`** — scanner, parser, chunker, extraction,
-  embedding, storage, and query settings
-- **`config/ontology/*.json`** — entity and relationship type
-  definitions. The default ontology is general-purpose; domain
-  ontologies (healthcare, legal, finance) ship as drop-in alternatives
+- **`config/default.toml`** — scanner, parser, chunker, extraction, embedding, storage, and query settings
+- **`config/ontology/*.json`** — entity and relationship type definitions. The default ontology is general-purpose; domain ontologies (healthcare, legal, finance) ship as drop-in alternatives
 - **`.env`** — API keys and infrastructure URLs (see `.env.example`)
 
-The full configuration reference is in
-[`PRD/project.md` §8](./PRD/project.md#8-configuration).
+The full configuration reference is in [`PRD/project.md` §8](./PRD/project.md#8-configuration).
 
 ## Project layout
 
@@ -190,13 +141,11 @@ npm run test:integration   # spins up Neo4j via Testcontainers
 npm run test:all           # both
 ```
 
-The end-to-end test in `tests/integration/pipeline.test.ts` requires
-Docker and a real `ANTHROPIC_API_KEY`; it skips if either is missing.
+The end-to-end test in `tests/integration/pipeline.test.ts` requires Docker and a real `ANTHROPIC_API_KEY`; it skips if either is missing.
 
 ## Roadmap
 
-The project ships in four phases. Each phase has a dedicated PRD with
-workstreams, acceptance criteria, and definition of done.
+The project ships in four phases. Each phase has a dedicated PRD with workstreams, acceptance criteria, and definition of done.
 
 | Phase | Theme | Milestone | PRD |
 |---|---|---|---|
