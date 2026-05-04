@@ -1,0 +1,12 @@
+{
+  "entities": [
+    {
+      "name": "John Smith",
+      "type": "Person"
+    },
+    {
+      "name": "Asia-Pacific",
+      "type": "Location"
+    }
+  ]
+}

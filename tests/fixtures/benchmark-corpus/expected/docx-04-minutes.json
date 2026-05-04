@@ -1,0 +1,20 @@
+{
+  "entities": [
+    {
+      "name": "Jane Wilson",
+      "type": "Person"
+    },
+    {
+      "name": "John Smith",
+      "type": "Person"
+    },
+    {
+      "name": "Marcus Reynolds",
+      "type": "Person"
+    },
+    {
+      "name": "New York",
+      "type": "Location"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+node_modules
+dist
+coverage
+
+# Local env
+.env
+
+# Runtime data
+data/
+*.db
+*.sqlite
+
+# OS / editor
+.DS_Store
+*.swp
+.vscode
+.idea
+
+PRD/

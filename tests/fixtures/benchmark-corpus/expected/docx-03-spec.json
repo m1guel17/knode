@@ -1,0 +1,19 @@
+{
+  "entities": [
+    {
+      "name": "Jane Wilson",
+      "type": "Person"
+    },
+    {
+      "name": "John Smith",
+      "type": "Person"
+    }
+  ],
+  "resolutionPairs": [
+    [
+      "Dr. Jane Wilson",
+      "Jane Wilson",
+      "Person"
+    ]
+  ]
+}

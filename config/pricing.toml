@@ -1,0 +1,28 @@
+# LLM pricing per model. USD per 1M tokens. Update as providers change pricing.
+# Missing entries are treated as zero-cost with a warning at startup so that a
+# stale table does not crash production runs.
+
+[models."claude-haiku-4-5-20251001"]
+input_per_million = 1.00
+output_per_million = 5.00
+
+[models."claude-sonnet-4-6"]
+input_per_million = 3.00
+output_per_million = 15.00
+
+[models."claude-opus-4-7"]
+input_per_million = 15.00
+output_per_million = 75.00
+
+# Embedding models (output_per_million is conventionally 0).
+[models."text-embedding-3-small"]
+input_per_million = 0.02
+output_per_million = 0.0
+
+[models."text-embedding-3-large"]
+input_per_million = 0.13
+output_per_million = 0.0
+
+[models."nomic-embed-text"]
+input_per_million = 0.0
+output_per_million = 0.0

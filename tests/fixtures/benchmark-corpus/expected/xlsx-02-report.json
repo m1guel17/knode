@@ -1,0 +1,12 @@
+{
+  "entities": [
+    {
+      "name": "Acme Corp",
+      "type": "Organization"
+    },
+    {
+      "name": "John Smith",
+      "type": "Person"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "entities": [
+    {
+      "name": "Acme Inc.",
+      "type": "Organization"
+    }
+  ],
+  "resolutionPairs": [
+    [
+      "Acme Corp",
+      "Acme Inc.",
+      "Organization"
+    ]
+  ]
+}

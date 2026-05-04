@@ -1,0 +1,143 @@
+{
+  "version": "1.0.0",
+  "name": "Default Ontology",
+  "description": "General-purpose entity and relationship types suitable for business documents",
+
+  "entityTypes": [
+    {
+      "name": "Person",
+      "description": "A named individual — employee, author, stakeholder, or public figure",
+      "properties": ["title", "role", "department", "email"],
+      "examples": ["John Smith", "the CEO", "Dr. Jane Wilson"]
+    },
+    {
+      "name": "Organization",
+      "description": "A company, institution, department, team, or named group",
+      "properties": ["industry", "location", "size", "ticker"],
+      "examples": ["Acme Corp", "the marketing department", "WHO"]
+    },
+    {
+      "name": "Location",
+      "description": "A geographic place — city, country, region, address, or facility",
+      "properties": ["country", "region", "coordinates"],
+      "examples": ["New York", "the London office", "Asia-Pacific region"]
+    },
+    {
+      "name": "Date",
+      "description": "A specific date, date range, or time reference",
+      "properties": ["iso_date", "precision"],
+      "examples": ["Q3 2024", "March 15, 2023", "fiscal year 2022"]
+    },
+    {
+      "name": "Concept",
+      "description": "An abstract idea, topic, methodology, strategy, or domain term",
+      "properties": ["domain", "definition"],
+      "examples": ["machine learning", "supply chain optimization", "GDPR compliance"]
+    },
+    {
+      "name": "Event",
+      "description": "A specific occurrence — meeting, incident, milestone, launch, or decision",
+      "properties": ["date", "location", "participants"],
+      "examples": ["the product launch", "board meeting on Jan 5", "the 2023 restructuring"]
+    },
+    {
+      "name": "Document",
+      "description": "A referenced document, report, agreement, or publication",
+      "properties": ["type", "date", "author"],
+      "examples": ["the Q2 earnings report", "Contract #4521", "Smith et al. (2023)"]
+    },
+    {
+      "name": "Metric",
+      "description": "A quantitative measurement, KPI, statistic, or financial figure",
+      "properties": ["value", "unit", "period", "trend"],
+      "examples": ["revenue of $4.2M", "15% year-over-year growth", "NPS score of 72"]
+    },
+    {
+      "name": "Product",
+      "description": "A product, service, feature, tool, or technology offering",
+      "properties": ["version", "status", "category"],
+      "examples": ["iPhone 15", "our CRM platform", "the v2.0 release"]
+    },
+    {
+      "name": "Technology",
+      "description": "A technology, framework, standard, protocol, or technical system",
+      "properties": ["category", "version"],
+      "examples": ["Kubernetes", "REST API", "TLS 1.3", "PostgreSQL"]
+    }
+  ],
+
+  "relationshipTypes": [
+    {
+      "name": "works_at",
+      "description": "A person is employed by or affiliated with an organization",
+      "source_types": ["Person"],
+      "target_types": ["Organization"]
+    },
+    {
+      "name": "located_in",
+      "description": "An entity is physically located in or headquartered in a place",
+      "source_types": ["Organization", "Event", "Person"],
+      "target_types": ["Location"]
+    },
+    {
+      "name": "occurred_on",
+      "description": "An event happened on a specific date",
+      "source_types": ["Event"],
+      "target_types": ["Date"]
+    },
+    {
+      "name": "authored_by",
+      "description": "A document was written or created by a person",
+      "source_types": ["Document"],
+      "target_types": ["Person"]
+    },
+    {
+      "name": "mentions",
+      "description": "A document or section references an entity",
+      "source_types": ["Document"],
+      "target_types": ["Person", "Organization", "Concept", "Product", "Event"]
+    },
+    {
+      "name": "part_of",
+      "description": "An entity belongs to or is a subdivision of another entity",
+      "source_types": ["Person", "Organization", "Product", "Location"],
+      "target_types": ["Organization", "Product", "Location"]
+    },
+    {
+      "name": "related_to",
+      "description": "A general semantic relationship between two entities",
+      "source_types": ["*"],
+      "target_types": ["*"]
+    },
+    {
+      "name": "caused_by",
+      "description": "An event or outcome was caused or triggered by another entity or event",
+      "source_types": ["Event", "Metric"],
+      "target_types": ["Event", "Concept", "Organization"]
+    },
+    {
+      "name": "depends_on",
+      "description": "An entity requires or depends on another entity",
+      "source_types": ["Product", "Technology", "Concept"],
+      "target_types": ["Product", "Technology", "Concept"]
+    },
+    {
+      "name": "measured_by",
+      "description": "A concept or entity is quantified by a specific metric",
+      "source_types": ["Concept", "Organization", "Product"],
+      "target_types": ["Metric"]
+    },
+    {
+      "name": "uses",
+      "description": "An entity employs or utilizes a technology or product",
+      "source_types": ["Organization", "Person", "Product"],
+      "target_types": ["Technology", "Product"]
+    },
+    {
+      "name": "competes_with",
+      "description": "Two organizations or products are competitors",
+      "source_types": ["Organization", "Product"],
+      "target_types": ["Organization", "Product"]
+    }
+  ]
+}

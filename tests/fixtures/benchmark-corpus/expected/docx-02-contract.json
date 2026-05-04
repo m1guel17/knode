@@ -1,0 +1,12 @@
+{
+  "entities": [
+    {
+      "name": "Acme Corp",
+      "type": "Organization"
+    },
+    {
+      "name": "TechStar Ltd",
+      "type": "Organization"
+    }
+  ]
+}

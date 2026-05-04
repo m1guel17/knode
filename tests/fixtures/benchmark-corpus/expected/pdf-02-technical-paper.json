@@ -1,0 +1,16 @@
+{
+  "entities": [
+    {
+      "name": "Maria Chen",
+      "type": "Person"
+    },
+    {
+      "name": "David Lopez",
+      "type": "Person"
+    },
+    {
+      "name": "Stanford University",
+      "type": "Organization"
+    }
+  ]
+}

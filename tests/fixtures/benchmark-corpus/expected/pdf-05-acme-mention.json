@@ -1,0 +1,23 @@
+{
+  "entities": [
+    {
+      "name": "Acme Corporation",
+      "type": "Organization"
+    },
+    {
+      "name": "Jane Wilson",
+      "type": "Person"
+    },
+    {
+      "name": "London",
+      "type": "Location"
+    }
+  ],
+  "resolutionPairs": [
+    [
+      "Acme Corp",
+      "Acme Corporation",
+      "Organization"
+    ]
+  ]
+}

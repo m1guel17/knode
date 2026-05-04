@@ -1,0 +1,12 @@
+{
+  "entities": [
+    {
+      "name": "Globex Inc",
+      "type": "Organization"
+    },
+    {
+      "name": "TechStar Ltd",
+      "type": "Organization"
+    }
+  ]
+}

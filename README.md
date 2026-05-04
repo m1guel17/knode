@@ -19,8 +19,6 @@ A filesystem-to-knowledge-graph pipeline. Knode watches a folder of heterogeneou
 
 The system is built on five principles: **modularity** (every layer is interface-driven and swappable), **provenance** (every fact traces back to a specific location in a specific document), **incremental processing** (re-runs only touch changed files), **cost-aware LLMusage** (tiered models, batching, budgets), and **TypeScript end-to-end** (no polyglot deployment).
 
-For the full architectural specification, see [`PRD/project.md`](./PRD/project.md). For per-phase delivery plans, see `PRD/phase-*.md`.
-
 ## What Knode does
 
 - Watches a directory tree for added, changed, and removed documents

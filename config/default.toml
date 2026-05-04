@@ -1,0 +1,86 @@
+# Phase 2 default configuration. Environment variables take precedence
+# (see src/shared/config.ts for the merge order).
+
+[chunker]
+# Target tokens per chunk. ~500 fits comfortably in any model context window.
+targetTokens = 500
+# Overlap shared between adjacent chunks; partially mitigates boundary entity loss.
+overlapTokens = 50
+# Below this, the chunker merges a section's tail into the next section's first chunk.
+# 0 disables merge-forward entirely (each section gets its own chunk regardless of size).
+minChunkTokens = 0
+# Hard ceiling. Tables exceeding this are still emitted but logged as warnings.
+maxChunkTokens = 2000
+# Splitter priority order — chunker tries heading boundaries first, then paragraph, then sentence.
+splitOn = ["heading", "paragraph", "sentence"]
+# PDFs that yield fewer characters than this per page total are flagged as
+# image-only (OCR fallback is Phase 4). pdf-parse returns nothing useful below
+# this threshold so we fail fast with a clear error.
+ocrThresholdCharsPerPage = 50
+
+[extraction]
+provider = "anthropic"
+# Cheap model for triple extraction. The resolver uses a more capable model below.
+model = "claude-haiku-4-5-20251001"
+temperature = 0.0
+maxRetries = 2
+ontologyPath = "config/ontology/default-ontology.json"
+# Per-document chunk extraction concurrency. ~5 chunks of one document run in
+# parallel, results collected, then a single graph write transaction.
+batchSize = 5
+
+[extraction.resolution]
+enabled = true
+# Tiered model: extraction uses Haiku, resolution uses Sonnet.
+model = "claude-sonnet-4-6"
+similarityThreshold = 0.92
+highConfidenceThreshold = 0.99
+maxCandidatesPerEntity = 5
+# Resolution adds noise for these types — skip them.
+skipTypes = ["Date", "Metric"]
+
+[embedding]
+provider = "openai"
+model = "text-embedding-3-small"
+# Mandatory: Neo4j vector indexes pin the dimension at creation time.
+dimensions = 1536
+batchSize = 100
+enabled = true
+
+[storage.neo4j]
+uri = "bolt://localhost:7687"
+user = "neo4j"
+password = "knode-dev-password"
+database = "neo4j"
+
+[processingLog]
+path = "./data/processing-log.db"
+
+[scanner]
+# Glob-style ignore patterns for folder mode.
+ignorePatterns = [
+  "**/.git/**",
+  "**/node_modules/**",
+  "**/.DS_Store",
+  "**/Thumbs.db",
+  "**/~$*",
+]
+
+[scanner.queue]
+redisUrl = "redis://localhost:6379"
+# File processing is LLM-bound; keep concurrency low to respect rate limits.
+fileConcurrency = 2
+# Resolution is graph-DB-bound and can run higher concurrency.
+resolutionConcurrency = 4
+rateLimitMax = 10
+rateLimitDurationMs = 60000
+retryAttempts = 3
+retryBackoffBaseMs = 5000
+
+[cost]
+pricingPath = "config/pricing.toml"
+# Hard ceiling for the entire run. Set per-environment.
+# budgetPerRunUsd = 10.0
+# Per-document soft ceiling.
+# budgetPerDocumentUsd = 1.0
+warnAtFraction = 0.8

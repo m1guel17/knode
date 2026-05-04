@@ -1,0 +1,85 @@
+{
+  "count": 20,
+  "docs": [
+    {
+      "name": "pdf-01-press-release.pdf",
+      "hasExpected": true
+    },
+    {
+      "name": "pdf-02-technical-paper.pdf",
+      "hasExpected": true
+    },
+    {
+      "name": "pdf-03-financial.pdf",
+      "hasExpected": true
+    },
+    {
+      "name": "pdf-04-multi-section.pdf",
+      "hasExpected": true
+    },
+    {
+      "name": "pdf-05-acme-mention.pdf",
+      "hasExpected": true
+    },
+    {
+      "name": "docx-01-memo.docx",
+      "hasExpected": true
+    },
+    {
+      "name": "docx-02-contract.docx",
+      "hasExpected": true
+    },
+    {
+      "name": "docx-03-spec.docx",
+      "hasExpected": true
+    },
+    {
+      "name": "docx-04-minutes.docx",
+      "hasExpected": true
+    },
+    {
+      "name": "docx-05-handout.docx",
+      "hasExpected": true
+    },
+    {
+      "name": "xlsx-01-sales.xlsx",
+      "hasExpected": true
+    },
+    {
+      "name": "xlsx-02-report.xlsx",
+      "hasExpected": true
+    },
+    {
+      "name": "xlsx-03-mixed.xlsx",
+      "hasExpected": true
+    },
+    {
+      "name": "xlsx-04-csv-style.xlsx",
+      "hasExpected": true
+    },
+    {
+      "name": "xlsx-05-single-cell.xlsx",
+      "hasExpected": true
+    },
+    {
+      "name": "pptx-01-product.pptx",
+      "hasExpected": true
+    },
+    {
+      "name": "pptx-02-board.pptx",
+      "hasExpected": true
+    },
+    {
+      "name": "pptx-03-customer.pptx",
+      "hasExpected": true
+    },
+    {
+      "name": "pptx-04-strategy.pptx",
+      "hasExpected": true
+    },
+    {
+      "name": "pptx-05-roundtable.pptx",
+      "hasExpected": true
+    }
+  ]
+}

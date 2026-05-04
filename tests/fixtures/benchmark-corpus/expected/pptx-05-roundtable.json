@@ -1,0 +1,12 @@
+{
+  "entities": [
+    {
+      "name": "Acme Corporation",
+      "type": "Organization"
+    },
+    {
+      "name": "London",
+      "type": "Location"
+    }
+  ]
+}

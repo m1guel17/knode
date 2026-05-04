@@ -1,0 +1,27 @@
+{
+  "entities": [
+    {
+      "name": "Acme Corp",
+      "type": "Organization"
+    },
+    {
+      "name": "Jane Wilson",
+      "type": "Person"
+    },
+    {
+      "name": "Globex Inc",
+      "type": "Organization"
+    },
+    {
+      "name": "Q3 2024",
+      "type": "Date"
+    }
+  ],
+  "relationships": [
+    {
+      "source": "Jane Wilson",
+      "relationship": "works_at",
+      "target": "Acme Corp"
+    }
+  ]
+}
