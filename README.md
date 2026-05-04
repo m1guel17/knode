@@ -9,6 +9,10 @@
 ![Biome](https://img.shields.io/badge/Biome-60A5FA?style=for-the-badge&logo=biome&logoColor=white)
 ![Built with Claude](https://img.shields.io/badge/Built%20with-Claude-D97757?style=for-the-badge&logo=anthropic&logoColor=white)
 
+<p align="center">
+  <img src="./assets/logo.png" alt="Knode logo" width="320">
+</p>
+
 > Built with [Claude](https://claude.com) — this project was designed and implemented in collaboration with Anthropic's Claude.
 
 A filesystem-to-knowledge-graph pipeline. Knode watches a folder of heterogeneous documents (PDF, DOCX, PPTX, XLSX, HTML, EML), extracts entities and relationships using LLMs, and persists the result as a dual **layout + semantic** knowledge graph in Neo4j. The graph is queryable via Cypher for exploration and via a RAG pipeline for LLM-augmented question answering grounded in the source corpus.
