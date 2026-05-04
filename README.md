@@ -1,5 +1,16 @@
 # Knode
 
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)
+![Neo4j](https://img.shields.io/badge/Neo4j-008CC1?style=for-the-badge&logo=neo4j&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)
+![Biome](https://img.shields.io/badge/Biome-60A5FA?style=for-the-badge&logo=biome&logoColor=white)
+![Built with Claude](https://img.shields.io/badge/Built%20with-Claude-D97757?style=for-the-badge&logo=anthropic&logoColor=white)
+
+> Built with [Claude](https://claude.com) — this project was designed and implemented in collaboration with Anthropic's Claude.
+
 A filesystem-to-knowledge-graph pipeline. Knode watches a folder of heterogeneous documents (PDF, DOCX, PPTX, XLSX, HTML, EML), extracts entities and relationships using LLMs, and persists the result as a dual **layout + semantic** knowledge graph in Neo4j. The graph is queryable via Cypher for exploration and via a RAG pipeline for LLM-augmented question answering grounded in the source corpus.
 
 The system is built on five principles: **modularity** (every layer is interface-driven and swappable), **provenance** (every fact traces back to a specific location in a specific document), **incremental processing** (re-runs only touch changed files), **cost-aware LLMusage** (tiered models, batching, budgets), and **TypeScript end-to-end** (no polyglot deployment).
