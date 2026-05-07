@@ -1,4 +1,4 @@
-# Phase 2 default configuration. Environment variables take precedence
+# Phase 3 default configuration. Environment variables take precedence
 # (see src/shared/config.ts for the merge order).
 
 [chunker]
@@ -40,10 +40,17 @@ maxCandidatesPerEntity = 5
 skipTypes = ["Date", "Metric"]
 
 [embedding]
-provider = "openai"
-model = "text-embedding-3-small"
-# Mandatory: Neo4j vector indexes pin the dimension at creation time.
-dimensions = 1536
+# Three providers supported: "openai" (1536 dims), "google", "ollama".
+# IMPORTANT: changing dimensions requires deleting the existing graph — Neo4j
+# vector indexes pin the dimension at creation time.
+#
+# Google: gemini-embedding-001 (current free-tier model). Native dims are 3072
+# but the API supports outputDimensionality truncation; we ask for 768 to
+# stay compact. The provider bypasses @ai-sdk/google (which only knows the
+# unsupported :batchEmbedContents endpoint) and calls :embedContent directly.
+provider = "google"
+model = "gemini-embedding-001"
+dimensions = 768
 batchSize = 100
 enabled = true
 
@@ -84,3 +91,49 @@ pricingPath = "config/pricing.toml"
 # Per-document soft ceiling.
 # budgetPerDocumentUsd = 1.0
 warnAtFraction = 0.8
+
+[api]
+host = "127.0.0.1"
+port = 3030
+# Hard ceiling on Cypher execution. Long queries get cancelled.
+cypherTimeoutMs = 30000
+# Result row cap. Larger results return 413 with a hint to add LIMIT.
+cypherMaxRows = 10000
+# Off by default — when on, the literal query text is logged at debug level
+# (helpful for triage but a privacy footgun in production).
+logQueryText = false
+
+[rag]
+enabled = true
+# Sonnet for synthesis — Phase 3 RAG quality is determined here.
+answerModel = "claude-sonnet-4-6"
+answerTemperature = 0.0
+# Step 1 retrieval breadth. Cast a wide net; expansion narrows it.
+paragraphTopK = 10
+entityTopK = 10
+# Step 2 expansion.
+maxHops = 2
+layoutWindow = 1
+# Step 3 token budget for the assembled context.
+maxContextTokens = 4000
+maxAnswerTokens = 1024
+# Ranking weight: rankAlpha * vector + (1-rankAlpha) * (anchorMatches/anchorCount)
+rankAlpha = 0.7
+
+[hybridSearch]
+enabled = true
+paragraphTopK = 15
+entityTopK = 15
+maxHops = 2
+layoutWindow = 1
+
+# Plugins are listed by name; the actual class is wired in src/plugins/index.ts
+# (the static registry). errorMode controls whether a plugin failure halts the
+# pipeline (`halt`) or only logs and continues (`continue`, default).
+[plugins]
+enabled = []
+# Example:
+# enabled = [
+#   { name = "confidence-filter", errorMode = "continue", options = { minEntityConfidence = 0.5, minRelationshipConfidence = 0.6 } },
+#   { name = "cost-reporter", errorMode = "continue", options = {} },
+# ]

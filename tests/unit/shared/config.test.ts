@@ -68,6 +68,45 @@ describe('loadConfig', () => {
     expect(cfg.storage.neo4j.user).toBe('admin');
   });
 
+  it('applies Phase 3 env overrides (api host/port, rag answer model)', () => {
+    const dir = writeConfigDir(VALID_TOML);
+    const cfg = loadConfig({
+      configDir: dir,
+      env: {
+        NODE_ENV: 'test',
+        KNODE_API_PORT: '4040',
+        KNODE_API_HOST: '0.0.0.0',
+        KNODE_RAG_ANSWER_MODEL: 'claude-opus-4-7',
+      },
+    });
+    expect(cfg.api.port).toBe(4040);
+    expect(cfg.api.host).toBe('0.0.0.0');
+    expect(cfg.rag.answerModel).toBe('claude-opus-4-7');
+  });
+
+  it('defaults the Phase 3 sections when not specified', () => {
+    const dir = writeConfigDir(VALID_TOML);
+    const cfg = loadConfig({ configDir: dir, env: { NODE_ENV: 'test' } });
+    expect(cfg.api.port).toBe(3030);
+    expect(cfg.rag.paragraphTopK).toBe(10);
+    expect(cfg.hybridSearch.enabled).toBe(true);
+    expect(cfg.plugins.enabled).toEqual([]);
+  });
+
+  it('parses plugin entries with errorMode and options', () => {
+    const dir = writeConfigDir(`${VALID_TOML}
+[plugins]
+enabled = [
+  { name = "confidence-filter", errorMode = "halt", options = { minEntityConfidence = 0.7 } },
+]
+`);
+    const cfg = loadConfig({ configDir: dir, env: { NODE_ENV: 'test' } });
+    expect(cfg.plugins.enabled).toHaveLength(1);
+    expect(cfg.plugins.enabled[0]?.name).toBe('confidence-filter');
+    expect(cfg.plugins.enabled[0]?.errorMode).toBe('halt');
+    expect(cfg.plugins.enabled[0]?.options.minEntityConfidence).toBe(0.7);
+  });
+
   it('throws ConfigError on invalid configuration', () => {
     const broken = `
 [chunker]

@@ -14,8 +14,9 @@ const log = createChildLogger('scanner.queue');
 
 export const FILE_QUEUE = 'file-jobs';
 export const RESOLUTION_QUEUE = 'resolution-jobs';
-export const FILE_DEAD_QUEUE = 'file-jobs:dead';
-export const RESOLUTION_DEAD_QUEUE = 'resolution-jobs:dead';
+// BullMQ v5+ forbids `:` in queue names (Redis key namespacing collision).
+export const FILE_DEAD_QUEUE = 'file-jobs-dead';
+export const RESOLUTION_DEAD_QUEUE = 'resolution-jobs-dead';
 
 export interface FileJobPayload {
   filePath: string;

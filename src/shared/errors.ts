@@ -19,3 +19,7 @@ export class ParserError extends KnodeError {}
 export class UnsupportedFileTypeError extends ParserError {}
 export class ExtractionError extends KnodeError {}
 export class StorageError extends KnodeError {}
+// Phase 3: HTTP API surface — request shape failures and forbidden-write attempts.
+export class ValidationError extends KnodeError {}
+// Phase 3: caller asked for something the system can't deliver (timeout, too many rows).
+export class QueryLimitError extends KnodeError {}

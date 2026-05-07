@@ -3,11 +3,16 @@
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TripleExtractor } from '../../src/extraction/index.js';
 import { DocxParser } from '../../src/parsers/adapters/docx-parser.js';
 import { DocumentChunker, ParserRegistry } from '../../src/parsers/index.js';
 import { Pipeline } from '../../src/pipeline.js';
+import {
+  PLUGIN_SKIP_FILE,
+  PluginManager,
+  type PipelinePlugin,
+} from '../../src/plugins/index.js';
 import { ProcessingLog } from '../../src/scanner/index.js';
 import type {
   Chunk,
@@ -119,6 +124,96 @@ describe('Pipeline orchestrator', () => {
 
     const second = await pipeline.processFile(FIXTURE_DOCX);
     expect(second.status).toBe('skipped');
+    expect(backend.writes).toHaveLength(1);
+  });
+
+  it('runs plugin lifecycle hooks in order', async () => {
+    const calls: string[] = [];
+    const plugin: PipelinePlugin = {
+      name: 'lifecycle-tracker',
+      async onFileDiscovered() {
+        calls.push('onFileDiscovered');
+      },
+      async onDocumentParsed() {
+        calls.push('onDocumentParsed');
+      },
+      async onEntitiesExtracted() {
+        calls.push('onEntitiesExtracted');
+      },
+      async onDocumentCompleted() {
+        calls.push('onDocumentCompleted');
+      },
+    };
+    const manager = new PluginManager();
+    manager.register({ plugin, errorMode: 'continue' });
+    const parsers = new ParserRegistry();
+    parsers.register(new DocxParser());
+    const pipeline = new Pipeline({
+      parsers,
+      chunker: new DocumentChunker({ targetTokens: 500, overlapTokens: 50 }),
+      extractor: new StubExtractor(),
+      backend,
+      log,
+      plugins: manager,
+    });
+    const stats = await pipeline.processFile(FIXTURE_DOCX);
+    expect(stats.status).toBe('completed');
+    expect(calls).toEqual([
+      'onFileDiscovered',
+      'onDocumentParsed',
+      'onEntitiesExtracted',
+      'onDocumentCompleted',
+    ]);
+  });
+
+  it('plugin can skip a file by returning null from onFileDiscovered', async () => {
+    const onCompleted = vi.fn();
+    const skipper: PipelinePlugin = {
+      name: 'skipper',
+      async onFileDiscovered() {
+        return PLUGIN_SKIP_FILE;
+      },
+      onDocumentCompleted: onCompleted,
+    };
+    const manager = new PluginManager();
+    manager.register({ plugin: skipper, errorMode: 'continue' });
+    const parsers = new ParserRegistry();
+    parsers.register(new DocxParser());
+    const pipeline = new Pipeline({
+      parsers,
+      chunker: new DocumentChunker({ targetTokens: 500, overlapTokens: 50 }),
+      extractor: new StubExtractor(),
+      backend,
+      log,
+      plugins: manager,
+    });
+    const stats = await pipeline.processFile(FIXTURE_DOCX);
+    expect(stats.status).toBe('skipped');
+    expect(onCompleted).not.toHaveBeenCalled();
+    expect(backend.writes).toHaveLength(0);
+  });
+
+  it('continue-mode plugin errors do not stop the pipeline', async () => {
+    const broken: PipelinePlugin = {
+      name: 'broken',
+      async onDocumentParsed() {
+        throw new Error('plugin boom');
+      },
+    };
+    const manager = new PluginManager();
+    manager.register({ plugin: broken, errorMode: 'continue' });
+    const parsers = new ParserRegistry();
+    parsers.register(new DocxParser());
+    const pipeline = new Pipeline({
+      parsers,
+      chunker: new DocumentChunker({ targetTokens: 500, overlapTokens: 50 }),
+      extractor: new StubExtractor(),
+      backend,
+      log,
+      plugins: manager,
+    });
+    const stats = await pipeline.processFile(FIXTURE_DOCX);
+    expect(stats.status).toBe('completed');
     expect(backend.writes).toHaveLength(1);
   });
 

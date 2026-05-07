@@ -1,0 +1,80 @@
+{
+  "version": "1.0.0",
+  "description": "Curated questions for the Phase 3 RAG eval. The expected fields are best-effort: answer-faithfulness uses substring match, source matching uses filename match.",
+  "questions": [
+    {
+      "id": "q1",
+      "question": "What did the press release announce?",
+      "expectedDocuments": ["pdf-01-press-release.pdf"],
+      "expectedAnswerSubstring": "Acme",
+      "tags": ["pdf", "single-doc"]
+    },
+    {
+      "id": "q2",
+      "question": "What is the technical paper about?",
+      "expectedDocuments": ["pdf-02-technical-paper.pdf"],
+      "expectedAnswerSubstring": "",
+      "tags": ["pdf", "single-doc"]
+    },
+    {
+      "id": "q3",
+      "question": "What were the financial results?",
+      "expectedDocuments": ["pdf-03-financial.pdf"],
+      "expectedAnswerSubstring": "",
+      "tags": ["pdf", "single-doc"]
+    },
+    {
+      "id": "q4",
+      "question": "Summarize the multi-section report.",
+      "expectedDocuments": ["pdf-04-multi-section.pdf"],
+      "expectedAnswerSubstring": "",
+      "tags": ["pdf", "long"]
+    },
+    {
+      "id": "q5",
+      "question": "Where is Acme Corp mentioned?",
+      "expectedDocuments": ["pdf-05-acme-mention.pdf", "pdf-01-press-release.pdf"],
+      "expectedAnswerSubstring": "Acme",
+      "tags": ["multi-doc", "entity-spanning"]
+    },
+    {
+      "id": "q6",
+      "question": "What did the memo say?",
+      "expectedDocuments": ["docx-01-memo.docx"],
+      "expectedAnswerSubstring": "",
+      "tags": ["docx"]
+    },
+    {
+      "id": "q7",
+      "question": "What are the contract terms?",
+      "expectedDocuments": ["docx-02-contract.docx"],
+      "expectedAnswerSubstring": "",
+      "tags": ["docx", "legal"]
+    },
+    {
+      "id": "q8",
+      "question": "What does the strategy deck cover?",
+      "expectedDocuments": ["pptx-04-strategy.pptx"],
+      "expectedAnswerSubstring": "",
+      "tags": ["pptx"]
+    },
+    {
+      "id": "q9",
+      "question": "What sales figures were reported?",
+      "expectedDocuments": ["xlsx-01-sales.xlsx"],
+      "expectedAnswerSubstring": "",
+      "tags": ["xlsx", "tabular"]
+    },
+    {
+      "id": "q10",
+      "question": "What organizations were discussed across the corpus?",
+      "expectedDocuments": [
+        "pdf-01-press-release.pdf",
+        "pdf-05-acme-mention.pdf",
+        "docx-02-contract.docx"
+      ],
+      "expectedAnswerSubstring": "",
+      "tags": ["multi-doc", "aggregation"]
+    }
+  ]
+}

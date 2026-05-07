@@ -92,8 +92,6 @@ Key configuration files:
 - **`config/ontology/*.json`** — entity and relationship type definitions. The default ontology is general-purpose; domain ontologies (healthcare, legal, finance) ship as drop-in alternatives
 - **`.env`** — API keys and infrastructure URLs (see `.env.example`)
 
-The full configuration reference is in [`PRD/project.md` §8](./PRD/project.md#8-configuration).
-
 ## Project layout
 
 ```
@@ -160,12 +158,12 @@ The end-to-end test in `tests/integration/pipeline.test.ts` requires Docker and 
 
 The project ships in four phases. Each phase has a dedicated PRD with workstreams, acceptance criteria, and definition of done.
 
-| Phase | Theme | Milestone | PRD |
-|---|---|---|---|
-| 1 | **Foundation** | Single-file CLI: PDF/DOCX → Neo4j with layout + semantic graph | [`phase-1-foundation.md`](./PRD/phase-1-foundation.md) |
-| 2 | **Intelligence** | Heading-aware chunking, entity resolution, embeddings, vector index, BullMQ queue, XLSX/PPTX | [`phase-2-intelligence.md`](./PRD/phase-2-intelligence.md) |
-| 3 | **Query & Retrieval** | RAG pipeline, Cypher API, hybrid search, plugin system, provenance-tracked answers | [`phase-3-query-and-retrieval.md`](./PRD/phase-3-query-and-retrieval.md) |
-| 4 | **Production Hardening** | Incremental updates, deletion handling, dead-letter recovery, Memgraph + Qdrant backends, Prometheus metrics | [`phase-4-production-hardening.md`](./PRD/phase-4-production-hardening.md) |
+| Phase | Theme | Milestone |
+|---|---|---|
+| 1 | **Foundation** | Single-file CLI: PDF/DOCX → Neo4j with layout + semantic graph |
+| 2 | **Intelligence** | Heading-aware chunking, entity resolution, embeddings, vector index, BullMQ queue, XLSX/PPTX |
+| 3 | **Query & Retrieval** | RAG pipeline, Cypher API, hybrid search, plugin system, provenance-tracked answers |
+| 4 | **Production Hardening** | Incremental updates, deletion handling, dead-letter recovery, Memgraph + Qdrant backends, Prometheus metrics |
 
 ## References
 

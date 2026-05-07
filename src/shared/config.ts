@@ -36,7 +36,7 @@ const ExtractionConfigSchema = z.object({
 });
 
 const EmbeddingConfigSchema = z.object({
-  provider: z.enum(['openai', 'ollama']),
+  provider: z.enum(['openai', 'ollama', 'google']),
   model: z.string().min(1),
   dimensions: z.number().int().positive(),
   batchSize: z.number().int().positive().default(100),
@@ -80,6 +80,58 @@ const CostConfigSchema = z.object({
   warnAtFraction: z.number().min(0).max(1).default(0.8),
 });
 
+const ApiConfigSchema = z.object({
+  host: z.string().min(1).default('127.0.0.1'),
+  port: z.number().int().positive().default(3030),
+  // Cypher endpoint guard rails. The denylist below is a last-line defense in
+  // addition to neo4j's READ session mode.
+  cypherTimeoutMs: z.number().int().positive().default(30_000),
+  cypherMaxRows: z.number().int().positive().default(10_000),
+  // Logged at info-level — the query text itself is hashed; this sets whether
+  // the raw query is also logged at debug level for triage.
+  logQueryText: z.boolean().default(false),
+});
+
+const RagConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  // The model that synthesizes the final answer. Tier this against extraction:
+  // RAG quality lives or dies on this model, so default to Sonnet.
+  answerModel: z.string().min(1).default('claude-sonnet-4-6'),
+  answerTemperature: z.number().min(0).max(2).default(0.0),
+  // Step 1 retrieval breadth.
+  paragraphTopK: z.number().int().positive().default(10),
+  entityTopK: z.number().int().positive().default(10),
+  // Step 2 expansion.
+  maxHops: z.number().int().positive().max(4).default(2),
+  layoutWindow: z.number().int().nonnegative().default(1),
+  // Step 3 packing.
+  maxContextTokens: z.number().int().positive().default(4000),
+  maxAnswerTokens: z.number().int().positive().default(1024),
+  // Ranking weight: alpha * vector + (1-alpha) * entity_match_count/total_anchors.
+  rankAlpha: z.number().min(0).max(1).default(0.7),
+});
+
+const HybridSearchConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  paragraphTopK: z.number().int().positive().default(15),
+  entityTopK: z.number().int().positive().default(15),
+  maxHops: z.number().int().positive().max(4).default(2),
+  layoutWindow: z.number().int().nonnegative().default(1),
+});
+
+const PluginEntrySchema = z.object({
+  name: z.string().min(1),
+  errorMode: z.enum(['continue', 'halt']).default('continue'),
+  options: z.record(z.unknown()).default({}),
+});
+
+const PluginsConfigSchema = z.object({
+  // Plugins are listed by name; the actual class is wired in code (no dynamic
+  // import, no sandbox). PluginManager looks up the constructor in a static
+  // registry and calls it with `options`.
+  enabled: z.array(PluginEntrySchema).default([]),
+});
+
 const ConfigSchema = z.object({
   chunker: ChunkerConfigSchema,
   extraction: ExtractionConfigSchema,
@@ -88,6 +140,10 @@ const ConfigSchema = z.object({
   processingLog: ProcessingLogConfigSchema,
   scanner: ScannerConfigSchema.default({} as never),
   cost: CostConfigSchema.default({} as never),
+  api: ApiConfigSchema.default({} as never),
+  rag: RagConfigSchema.default({} as never),
+  hybridSearch: HybridSearchConfigSchema.default({} as never),
+  plugins: PluginsConfigSchema.default({} as never),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
@@ -99,6 +155,11 @@ export type Neo4jConfig = z.infer<typeof Neo4jConfigSchema>;
 export type ScannerConfig = z.infer<typeof ScannerConfigSchema>;
 export type QueueConfig = z.infer<typeof QueueConfigSchema>;
 export type CostConfig = z.infer<typeof CostConfigSchema>;
+export type ApiConfig = z.infer<typeof ApiConfigSchema>;
+export type RagConfig = z.infer<typeof RagConfigSchema>;
+export type HybridSearchConfig = z.infer<typeof HybridSearchConfigSchema>;
+export type PluginEntry = z.infer<typeof PluginEntrySchema>;
+export type PluginsConfig = z.infer<typeof PluginsConfigSchema>;
 
 interface LoadOptions {
   configDir?: string;
@@ -169,6 +230,18 @@ function envOverrides(env: NodeJS.ProcessEnv): Record<string, unknown> {
     out.cost = {
       ...((out.cost as Record<string, unknown>) ?? {}),
       budgetPerRunUsd: Number(env.KNODE_BUDGET_PER_RUN_USD),
+    };
+  }
+  if (env.KNODE_API_PORT || env.KNODE_API_HOST) {
+    const api: Record<string, unknown> = {};
+    if (env.KNODE_API_PORT) api.port = Number(env.KNODE_API_PORT);
+    if (env.KNODE_API_HOST) api.host = env.KNODE_API_HOST;
+    out.api = { ...((out.api as Record<string, unknown>) ?? {}), ...api };
+  }
+  if (env.KNODE_RAG_ANSWER_MODEL) {
+    out.rag = {
+      ...((out.rag as Record<string, unknown>) ?? {}),
+      answerModel: env.KNODE_RAG_ANSWER_MODEL,
     };
   }
   return out;

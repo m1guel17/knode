@@ -8,6 +8,7 @@ import type { EmbeddingGenerator } from './extraction/embedding-generator.js';
 import type { EntityResolver } from './extraction/entity-resolver.js';
 import type { TripleExtractor } from './extraction/index.js';
 import type { DocumentChunker, ParserRegistry } from './parsers/index.js';
+import type { PluginManager } from './plugins/index.js';
 import { type ProcessingLog, classifyFile } from './scanner/index.js';
 import { createChildLogger } from './shared/logger.js';
 import type { Chunk, ExtractionResult, ProcessingStats } from './shared/types.js';
@@ -22,6 +23,9 @@ export interface PipelineDeps {
   embeddings?: EmbeddingGenerator | null;
   resolver?: EntityResolver | null;
   costController?: CostController | null;
+  // Phase 3: optional plugin manager. Plugins extend the lifecycle without
+  // forking the pipeline.
+  plugins?: PluginManager | null;
   // Concurrency for chunk extraction within a single file.
   extractionBatchSize?: number;
   logger?: Logger;
@@ -43,7 +47,7 @@ export class Pipeline {
     let stage = 'classify';
 
     try {
-      const job = await classifyFile(filePath);
+      let job = await classifyFile(filePath);
       documentId = job.id;
       this.logger.info(
         {
@@ -54,6 +58,25 @@ export class Pipeline {
         },
         'pipeline.classified'
       );
+
+      // Phase 3 plugin hook: onFileDiscovered. Plugins may rewrite the job or
+      // skip the file entirely (returning null).
+      if (this.deps.plugins) {
+        const result = await this.deps.plugins.runOnFileDiscovered({ job });
+        if (result === null) {
+          this.logger.info({ filePath: job.filePath }, 'pipeline.skipped_by_plugin');
+          return {
+            filePath: job.filePath,
+            documentId: job.id,
+            status: 'skipped',
+            chunkCount: 0,
+            entityCount: 0,
+            relationshipCount: 0,
+            durationMs: Date.now() - startedAt,
+          };
+        }
+        job = result.job;
+      }
 
       // Idempotency: skip if same path + same hash + previously completed.
       const prior = this.deps.log.findByPath(job.filePath);
@@ -81,7 +104,7 @@ export class Pipeline {
 
       stage = 'parse';
       const parser = this.deps.parsers.getParserFor(job);
-      const parsed = await parser.parse(job);
+      let parsed = await parser.parse(job);
       this.logger.info(
         {
           filePath: job.filePath,
@@ -92,13 +115,34 @@ export class Pipeline {
         'pipeline.parsed'
       );
 
+      // Plugin hook: onDocumentParsed.
+      if (this.deps.plugins) {
+        const result = await this.deps.plugins.runOnDocumentParsed({ job, parsed });
+        parsed = result.parsed;
+      }
+
       stage = 'chunk';
       const chunks: Chunk[] = this.deps.chunker.chunk(parsed);
       chunkCount = chunks.length;
       this.logger.info({ filePath: job.filePath, chunkCount: chunks.length }, 'pipeline.chunked');
 
       stage = 'extract';
-      const extractions = await this.runExtractionBatched(chunks);
+      let extractions = await this.runExtractionBatched(chunks);
+
+      // Plugin hook: onEntitiesExtracted. Filters/annotators run here, before
+      // the resolver. Recompute counts after the hook so stats reflect the
+      // post-filter graph.
+      if (this.deps.plugins) {
+        const result = await this.deps.plugins.runOnEntitiesExtracted({
+          job,
+          chunks,
+          extractions,
+        });
+        extractions = result.extractions;
+      }
+
+      entityCount = 0;
+      relationshipCount = 0;
       for (const r of extractions.values()) {
         entityCount += r.entities.length;
         relationshipCount += r.relationships.length;
@@ -183,7 +227,7 @@ export class Pipeline {
         costUsd,
       });
 
-      return {
+      const stats: ProcessingStats = {
         filePath: job.filePath,
         documentId: job.id,
         status: 'completed',
@@ -192,6 +236,13 @@ export class Pipeline {
         relationshipCount,
         durationMs: Date.now() - startedAt,
       };
+
+      // Plugin hook: onDocumentCompleted (side-effect only).
+      if (this.deps.plugins) {
+        await this.deps.plugins.runOnDocumentCompleted({ job, stats });
+      }
+
+      return stats;
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       this.logger.error({ filePath, stage, error: message }, 'pipeline.failed');

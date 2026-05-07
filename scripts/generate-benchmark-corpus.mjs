@@ -261,6 +261,10 @@ function pdfDoc(name, title, paragraphs, expectedSpec) {
     write: async () => {
       const path = resolve(ROOT, `${name}.pdf`);
       await new Promise((resolveP, reject) => {
+        // compress: false — pdf-parse@1.1.1 can't read pdfkit's compressed
+        // XRef format. Even uncompressed, it chokes on single-page PDFs that
+        // are below ~2 KB; force a second page so the XRef table has more
+        // than the trivial number of entries.
         const doc = new PDFDocument({ size: 'LETTER', margin: 72, compress: false });
         const chunks = [];
         doc.on('data', (b) => chunks.push(b));
@@ -276,6 +280,18 @@ function pdfDoc(name, title, paragraphs, expectedSpec) {
           doc.text(p, { align: 'left' });
           doc.moveDown();
         }
+        // Second page with a footer paragraph — content is filler but it
+        // makes pdf-parse happy and gives the chunker a second page to walk.
+        doc.addPage();
+        doc.fontSize(13).text('Notes', { underline: false });
+        doc.moveDown();
+        doc
+          .fontSize(11)
+          .text(
+            `Generated for the knode benchmark corpus. Document: "${title}". ` +
+              'This page is intentionally short and contains no entities or ' +
+              'relationships that the extractor should pick up.'
+          );
         doc.end();
       });
     },
